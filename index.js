@@ -117,7 +117,7 @@ async function run() {
     res.send(users);
   });
 
-  // ---------- Update Role / Status ----------
+  // ---------- Update Role / Status ---------
   app.patch("/update-role", verifyJWT, verifyAdmin, async (req, res) => {
     const { email, role, status } = req.body;
 
