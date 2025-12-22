@@ -6,6 +6,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const admin = require("firebase-admin");
 
 const port = process.env.PORT || 3000;
+const host = "0.0.0.0";
 
 // ---------- Firebase Admin ----------
 const decoded = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString(
@@ -22,7 +23,7 @@ const app = express();
 // ---------- Middleware ----------
 app.use(
   cors({
-    origin: [process.env.CLIENT_DOMAIN],
+    origin: [process.env.CLIENT_DOMAIN, "http://192.168.0.102:5173"],
     credentials: true,
   })
 );
@@ -117,7 +118,7 @@ async function run() {
     res.send(users);
   });
 
-  // ---------- Update Role / Status ---------
+  // ---------- Update Role / Status -------------
   app.patch("/update-role", verifyJWT, verifyAdmin, async (req, res) => {
     const { email, role, status } = req.body;
 
@@ -274,34 +275,30 @@ async function run() {
   });
 
   // ---------- Stripe Checkout ----------
-  app.post(
-    "/create-checkout-session",
-    verifyJWT,
-    verifyActiveUser,
-    async (req, res) => {
-      const fundInfo = req.body;
+  app.post("/create-checkout-session", verifyJWT, async (req, res) => {
+    const { email, name, image, amount } = req.body; 
 
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        mode: "payment",
-        customer_email: fundInfo.email,
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              unit_amount: fundInfo.amount * 100,
-              product_data: { name: "Fund Deposit" },
-            },
-            quantity: 1,
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      customer_email: email,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: amount * 100,
+            product_data: { name: "Fund Deposit" },
           },
-        ],
-        success_url: `${process.env.CLIENT_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.CLIENT_DOMAIN}/dashboard/funding`,
-      });
+          quantity: 1,
+        },
+      ],
+      metadata: { name, image },
+      success_url: `${process.env.CLIENT_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.CLIENT_DOMAIN}/dashboard/funding`,
+    });
 
-      res.send({ url: session.url });
-    }
-  );
+    res.send({ url: session.url });
+  });
 
   // ---------- Payment Success ----------
   app.post("/payment-success", async (req, res) => {
@@ -315,10 +312,13 @@ async function run() {
       await fundsCollection.insertOne({
         transactionId: session.payment_intent,
         payerEmail: session.customer_details.email,
-        amount: session.amount_total / 100,
-        date: new Date().toISOString(),
+        payerName: session.metadata?.name || "Anonymous",
+        payerImage: session.metadata?.image || "",
+        amountTotal: session.amount_total / 100,
+        paymentDate: new Date().toISOString(),
       });
     }
+
     res.send({ success: true });
   });
 
@@ -363,6 +363,6 @@ app.get("/", (req, res) => {
 });
 
 // ---------- Start Server ----------
-app.listen(port, () => {
+app.listen(port, host, () => {
   console.log(`Server running on port ${port}`);
 });
