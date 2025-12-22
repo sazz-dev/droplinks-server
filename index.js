@@ -23,10 +23,17 @@ const app = express();
 // ---------- Middleware ----------
 app.use(
   cors({
-    origin: [process.env.CLIENT_DOMAIN, "http://192.168.0.102:5173"],
+    origin: [
+      process.env.CLIENT_DOMAIN,
+      "http://localhost:5173",
+      "http://192.168.0.102:5173",
+    ],
     credentials: true,
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 app.use(express.json());
 
 // ---------- JWT Middleware ----------
@@ -276,7 +283,7 @@ async function run() {
 
   // ---------- Stripe Checkout ----------
   app.post("/create-checkout-session", verifyJWT, async (req, res) => {
-    const { email, name, image, amount } = req.body; 
+    const { email, name, image, amount } = req.body;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -333,13 +340,12 @@ async function run() {
     try {
       const totalUsers = await usersCollection.countDocuments();
       const totalRequests = await donationRequests.countDocuments();
-
       const funds = await fundsCollection.find().toArray();
 
-      const totalFunding = funds.reduce((sum, fund) => {
-        const amount = parseFloat(fund.amount);
-        return sum + (isNaN(amount) ? 0 : amount);
-      }, 0);
+      const totalFunding = funds.reduce(
+        (sum, fund) => sum + Number(fund.amountTotal || 0),
+        0
+      );
 
       res.send({
         totalUsers,
