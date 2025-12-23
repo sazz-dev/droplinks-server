@@ -81,7 +81,7 @@ async function run() {
 
     if (user.status === "blocked") {
       return res.status(403).send({
-        message: "Your account has been blocked. Contact admin.",
+        message: "You're Blocked, Contact admin.",
       });
     }
     next();
@@ -383,5 +383,5 @@ app.get("/", (req, res) => {
 
 // ---------- Start Server ----------
 app.listen(port, host, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });
