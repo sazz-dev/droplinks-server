@@ -270,12 +270,29 @@ async function run() {
   );
 
   // ---------- My Donation Requests ----------
-  app.get("/my-donation-requests", verifyJWT, async (req, res) => {
-    const result = await donationRequests
-      .find({ requesterEmail: req.tokenEmail })
-      .toArray();
-    res.send(result);
+app.get("/my-donation-requests", verifyJWT, async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const filter = { requesterEmail: req.tokenEmail };
+
+  const total = await donationRequests.countDocuments(filter);
+  const data = await donationRequests
+    .find(filter)
+    .skip(skip)
+    .limit(limit)
+    .sort({ donationDate: -1 })
+    .toArray();
+
+  res.send({
+    data,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
   });
+});
 
   // ---------- Stripe Checkout ----------
   app.post("/create-checkout-session", verifyJWT, async (req, res) => {
