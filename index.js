@@ -26,7 +26,7 @@ app.use(
     origin: [
       process.env.CLIENT_DOMAIN,
       "http://localhost:5173",
-      "http://droplinks.org/",
+      "https://droplinks.org",
       "http://192.168.0.102:5173",
     ],
     credentials: true,
