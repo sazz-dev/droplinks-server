@@ -26,6 +26,7 @@ app.use(
     origin: [
       process.env.CLIENT_DOMAIN,
       "http://localhost:5173",
+      "http://droplinks.org/",
       "http://192.168.0.102:5173",
     ],
     credentials: true,
@@ -111,16 +112,11 @@ async function run() {
   });
 
   // ---------- Get All Users (Admin) ----------
-  // app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
-  //   const users = await usersCollection.find().toArray();
-
-  //   res.send(users);
-  // });
 
   app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
     const adminEmail = req.tokenEmail;
     const users = await usersCollection
-      .find({ email: { $ne: adminEmail } }) //Exclude cureent admin
+      .find({ email: { $ne: adminEmail } }) 
       .toArray();
     res.send(users);
   });
@@ -182,7 +178,7 @@ async function run() {
   app.get("/donors", async (req, res) => {
     try {
       const donors = await usersCollection
-        .find({ role: "donor" }) // Only donors
+        .find({ role: "donor" })
         .toArray();
 
       res.send(donors);
