@@ -20,7 +20,7 @@ admin.initializeApp({
 
 const app = express();
 
-// ---------- Middleware ----------
+// ---------- Middleware ---------- //
 app.use(
   cors({
     origin: [
@@ -371,7 +371,7 @@ app.get("/my-donation-requests", verifyJWT, async (req, res) => {
     }
   });
 
-  console.log("MongoDB connected");
+  console.log("MongoDB Run");
 }
 
 run().catch(console.error);
