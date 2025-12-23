@@ -371,7 +371,7 @@ app.get("/my-donation-requests", verifyJWT, async (req, res) => {
     }
   });
 
-  console.log("MongoDB Run");
+  console.log("MongoDB Connected");
 }
 
 run().catch(console.error);
